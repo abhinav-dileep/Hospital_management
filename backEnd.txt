@@ -1,0 +1,6 @@
+Backend API:
+
+  1. post method (register api )
+    http://localhost:4000/api/register
+ 2. get method(login api)
+    http://localhost:4000/api/users
