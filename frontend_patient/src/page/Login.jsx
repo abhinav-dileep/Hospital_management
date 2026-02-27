@@ -85,7 +85,7 @@ const Login = () => {
                                         type="text"
                                         id="identifier"
                                         name="identifier"
-                                        placeholder="you@hospital.com"
+                                        placeholder="Email or Phone Number"
                                         value={formData.identifier}
                                         onChange={handleChange}
                                         className="form-control border-start-0 bg-light"

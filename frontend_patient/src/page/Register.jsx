@@ -42,8 +42,8 @@ const Register = () => {
     };
 
     const fields = [
-        { label: 'Full Name', id: 'name', type: 'text', placeholder: 'Dr. John Doe', icon: <User size={16} /> },
-        { label: 'Email Address', id: 'email', type: 'email', placeholder: 'you@hospital.com', icon: <Mail size={16} /> },
+        { label: 'Full Name', id: 'name', type: 'text', placeholder: 'User Name', icon: <User size={16} /> },
+        { label: 'Email Address', id: 'email', type: 'email', placeholder: 'Email', icon: <Mail size={16} /> },
         { label: 'Phone Number', id: 'phone', type: 'tel', placeholder: '+91 9999999999', icon: <Phone size={16} /> },
         { label: 'Password', id: 'password', type: 'password', placeholder: '••••••••', icon: <Lock size={16} /> },
     ];
