@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-glow: rgba(37, 99, 235, 0.35);
+  --accent: #60a5fa;
+  --accent-soft: rgba(59, 130, 246, 0.15);
+
+
+  --background: #0a1628;
+  --surface: #0d2040;
+  --surface-2: rgba(255, 255, 255, 0.05);
+
+
+  --text: #f0f6ff;
+  --text-muted: #93c5fd;
+
+
+  --border: rgba(59, 130, 246, 0.25);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: transparent;
+  color: #212529;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
