@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════
+   APP-LEVEL GLOBAL OVERRIDES
+═══════════════════════════════════════════ */
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Push footer to bottom ── */
+.App > main,
+.App > div:not(nav):not(footer) {
+  flex: 1;
+}
+
+/* ── Bootstrap container responsive padding ── */
+@media (max-width: 575.98px) {
+  .container, .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* ── Row gap compensation ── */
+.row { --bs-gutter-x: 1.5rem; }
+
+@media (max-width: 575.98px) {
+  .row { --bs-gutter-x: 1rem; }
+}
+
+/* ═══════════════════════════════════════════
+   SECTION SHARED STYLES
+═══════════════════════════════════════════ */
+
+/* Section header pill (reusable) */
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 165, 233, 0.10);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: 9999px;
+  padding: 5px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0369a1;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+/* Section heading */
+.section-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+
+.section-subtitle {
+  color: #475569;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════
+   CARD RESPONSIVE HELPERS
+═══════════════════════════════════════════ */
+
+/* Ensure cards never overflow horizontally */
+.card-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   HERO SECTION RESPONSIVE TWEAKS
+═══════════════════════════════════════════ */
+@media (max-width: 991.98px) {
+  /* Center hero text on tablet/mobile */
+  .hero-text-col {
+    text-align: center !important;
+  }
+  .hero-text-col .d-inline-flex,
+  .hero-text-col .d-flex:not(.flex-column) {
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-cta-primary,
+  .hero-cta-outline {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   BOOKING SERVICE SECTION
+═══════════════════════════════════════════ */
+@media (max-width: 575.98px) {
+  /* 1-column on very small screens */
+  .service-grid .col-sm-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FIND DOCTOR & NEAREST FACILITY
+═══════════════════════════════════════════ */
+@media (max-width: 767.98px) {
+  /* Facility cards: 1 column on mobile */
+  .facility-card-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 575.98px) {
+  footer .col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ACCESSIBILITY: focus-visible ring
+═══════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 3px;
+}
+
+/* Remove outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════
+   DARK SURFACE TEXT CONTRAST FIX
+═══════════════════════════════════════════ */
+.text-on-brand { color: #fff !important; }
+.text-brand    { color: #0ea5e9 !important; }
