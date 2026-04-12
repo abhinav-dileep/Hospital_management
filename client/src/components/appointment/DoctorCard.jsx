@@ -40,9 +40,11 @@ const DoctorCard = ({ doctor, onBook }) => (
       ))}
     </div>
 
-    <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-      <Stethoscope size={13} /> {doctor.hospital}
-    </p>
+    {doctor.hospital && (
+      <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <Stethoscope size={13} /> {doctor.hospital}
+      </p>
+    )}
 
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <span style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.92rem", display: "flex", alignItems: "center", gap: 3 }}>

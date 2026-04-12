@@ -2,29 +2,25 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  X, Loader2, User, Mail, IndianRupee, CalendarCheck,
+  X, Loader2, User, Mail, IndianRupee, CalendarCheck, Video, Hospital,
 } from "lucide-react";
 
 const today = () => new Date().toISOString().split("T")[0];
-const fmtSlot = (slot) => {
-  if (!slot) return slot;
-  const [time, period] = slot.split(" ");
-  const [hStr, mStr] = time.split(":");
-  const h = parseInt(hStr, 10); const m = parseInt(mStr, 10);
-  let h24 = period === "PM" && h !== 12 ? h + 12 : period === "AM" && h === 12 ? 0 : h;
-  h24 = (h24 + 1) % 24;
-  const endH = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
-  return `${slot} to ${endH}:${String(m).padStart(2,"0")} ${h24 < 12 ? "AM" : "PM"}`;
-};
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = "http://localhost:4000/api";
 
 const getBookedSlots = async (doctorId, date) => {
   try {
-    const res = await axios.get(`${API_BASE}/appointments/booked-slots?doctorId=${doctorId}&date=${date}`);
-    return { success: true, bookedSlots: res.data.bookedSlots };
-  } catch (err) {
-    return { success: false, bookedSlots: [] };
+    const res = await axios.get(
+      `${API_BASE}/appointments/booked-slots?doctorId=${doctorId}&date=${date}`
+    );
+    return {
+      success: true,
+      bookedSlots: res.data.bookedSlots ?? [],
+      slotCounts: res.data.slotCounts ?? {},
+    };
+  } catch {
+    return { success: false, bookedSlots: [], slotCounts: {} };
   }
 };
 
@@ -37,30 +33,62 @@ const bookAppointment = async (data) => {
   }
 };
 
+/* ─── Styles unique to BookingModal (not in Appointment.css) ─────────────── */
+const modalCSS = `
+  /* Appointment type toggle buttons */
+  .appt-type-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 7px; padding: 10px 0; border-radius: 10px; border: 2px solid #e2e8f0;
+    background: #f8fafc; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+    color: #64748b; transition: all 0.18s;
+  }
+  .appt-type-btn:hover { border-color: #0ea5e9; }
+  .appt-type-btn.selected-inperson { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
+  .appt-type-btn.selected-video    { background: #eff6ff; border-color: #1d4ed8; color: #1d4ed8; }
+
+  /* Slot buttons — overrides base with column layout for capacity badge */
+  .appt-slot-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .appt-slot-btn.partial { border-color: #f59e0b; }
+  .appt-slot-btn.selected .slot-cap { color: #bae6fd; }
+
+  /* Slot capacity badge */
+  .slot-cap { font-size: 0.65rem; font-weight: 600; color: #94a3b8; }
+  .slot-cap.low { color: #f59e0b; }
+
+  /* Ensure modal overlays the sticky navbar (z-index: 1050) */
+  .appt-modal-overlay { z-index: 1200 !important; }
+`;
+
+/* ─── Component ──────────────────────────────────────────────────────────── */
 const BookingModal = ({ doctor, onClose, onSuccess }) => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [date, setDate] = useState(today());
-  const [bookedSlots, setBookedSlots] = useState([]);
+  const [slotCounts, setSlotCounts] = useState({});
   const [selectedSlot, setSlot] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [appointmentType, setAppointmentType] = useState("in-person");
   const [form, setForm] = useState({
     patientName: user.name || "",
     patientPhone: user.phone || "",
     patientEmail: user.email || "",
-    age: "", gender: "Male", reason: "",
+    age: "",
+    gender: "Male",
+    reason: "",
   });
 
   const dayName = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
-  const availSlots = (doctor.availability?.find((a) => a.day === dayName)?.slots) || [];
+  const dayAvailability = doctor.availability?.find((a) => a.day === dayName);
+  const availSlots = dayAvailability?.slots || [];
+  const maxPerSlot = dayAvailability?.maxPatientsPerSlot ?? 1;
 
   useEffect(() => {
     if (!doctor._id || !date) return;
     setLoadingSlots(true);
     setSlot("");
-    getBookedSlots(doctor._id, date).then(({ bookedSlots: bs }) => {
-      setBookedSlots(bs || []);
+    getBookedSlots(doctor._id, date).then(({ slotCounts: sc }) => {
+      setSlotCounts(sc || {});
       setLoadingSlots(false);
     });
   }, [doctor._id, date]);
@@ -69,6 +97,9 @@ const BookingModal = ({ doctor, onClose, onSuccess }) => {
     e.preventDefault();
     if (!selectedSlot) { toast.error("Please select a time slot"); return; }
     if (!user._id) { toast.error("Please log in first"); return; }
+    if (appointmentType === "video-call" && !doctor.allowsVideoCall) {
+      toast.error("This doctor does not offer video consultations"); return;
+    }
 
     setSubmitting(true);
     const result = await bookAppointment({
@@ -82,24 +113,82 @@ const BookingModal = ({ doctor, onClose, onSuccess }) => {
       date,
       slot: selectedSlot,
       reason: form.reason,
+      appointmentType,
     });
     setSubmitting(false);
 
     if (result.success) {
-      toast.success("Appointment booked! ✅");
+      toast.success(`Appointment booked! ✅ (${appointmentType === "video-call" ? "Video Call 🎥" : "In-Person 🏥"})`);
       onSuccess();
     } else {
       toast.error(result.message);
     }
   };
 
+  /* Render slot buttons */
+  const renderSlots = () => {
+    if (loadingSlots)
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: "0.85rem", padding: "8px 0" }}>
+          <Loader2 size={16} className="spin" /> Loading slots…
+        </div>
+      );
+
+    if (availSlots.length === 0)
+      return (
+        <p style={{ color: "#f59e0b", fontSize: "0.82rem", margin: "6px 0", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
+          ⚠ No slots available on {dayName}. Pick another date.
+        </p>
+      );
+
+    const startSlot = availSlots[0];
+    const endSlot = availSlots[availSlots.length - 1];
+    
+    // Create a single block for the entire shift
+    const slotStr = startSlot === endSlot ? startSlot : `${startSlot} – ${endSlot}`;
+
+    const slotPairs = [{
+      slot: slotStr,
+      label: slotStr,
+    }];
+
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+        {slotPairs.map(({ slot, label }) => {
+          const booked = (slotCounts[slot] || 0) >= maxPerSlot;
+          const remaining = maxPerSlot - (slotCounts[slot] || 0);
+          const isPartial = !booked && remaining < maxPerSlot && maxPerSlot > 1;
+          return (
+            <button
+              key={slot}
+              type="button"
+              disabled={booked}
+              onClick={() => setSlot(slot)}
+              className={`appt-slot-btn${selectedSlot === slot ? " selected" : ""}${booked ? " booked" : ""}${isPartial ? " partial" : ""}`}
+            >
+              <span>{label}</span>
+              {maxPerSlot > 1 && (
+                <span className={`slot-cap${remaining <= 2 && !booked ? " low" : ""}`}>
+                  {booked ? "Full" : `${remaining} left`}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="appt-modal-overlay" onClick={onClose}>
+      <style>{modalCSS}</style>
       <div className="appt-modal-card" onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
           <div>
             <h3 style={{ fontWeight: 800, color: "#0f172a", margin: 0, fontSize: "1.1rem" }}>Book Appointment</h3>
-            <p style={{ color: "#64748b", fontSize: "0.82rem", margin: 0 }}>
+            <p style={{ color: "#64748b", fontSize: "0.82rem", margin: "3px 0 0" }}>
               {doctor.name} · {doctor.speciality}
             </p>
           </div>
@@ -109,41 +198,57 @@ const BookingModal = ({ doctor, onClose, onSuccess }) => {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+          {/* Appointment Type */}
+          {doctor.allowsVideoCall && (
+            <div>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: 8 }}>
+                Appointment Type
+              </label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setAppointmentType("in-person")}
+                  className={`appt-type-btn${appointmentType === "in-person" ? " selected-inperson" : ""}`}
+                >
+                  <Hospital size={16} /> In-Person
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAppointmentType("video-call")}
+                  className={`appt-type-btn${appointmentType === "video-call" ? " selected-video" : ""}`}
+                >
+                  <Video size={16} /> Video Call
+                </button>
+              </div>
+              {appointmentType === "video-call" && (
+                <p style={{ fontSize: "0.75rem", color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "7px 11px", marginTop: 8 }}>
+                  🎥 A video link will be shared before your appointment.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Date */}
           <div className="appt-field">
             <label>Appointment Date</label>
             <input type="date" value={date} min={today()} onChange={(e) => setDate(e.target.value)} required />
           </div>
 
+          {/* Slot picker */}
           <div>
-            <label className="appt-field-label">Select Time Slot</label>
-            {loadingSlots ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: "0.85rem", padding: "8px 0" }}>
-                <Loader2 size={16} className="spin" /> Loading slots…
-              </div>
-            ) : availSlots.length === 0 ? (
-              <p style={{ color: "#f59e0b", fontSize: "0.82rem", margin: "6px 0", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
-                ⚠ No slots available on {dayName}. Pick another date.
-              </p>
-            ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
-                {availSlots.slice(0, -1).map((slot, i) => {
-                  const label = `${slot} to ${availSlots[i + 1]}`;
-                  const booked = bookedSlots.includes(slot);
-                  return (
-                    <button
-                      key={slot} type="button"
-                      disabled={booked}
-                      onClick={() => setSlot(slot)}
-                      className={`appt-slot-btn ${selectedSlot === slot ? "selected" : ""} ${booked ? "booked" : ""}`}
-                    >
-                      {label} {booked && "(Full)"}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: 700, color: "#374151", marginBottom: 4 }}>
+              <span>Select Time Slot</span>
+              {maxPerSlot > 1 && availSlots.length > 0 && !loadingSlots && (
+                <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", padding: "2px 8px", borderRadius: 10 }}>
+                  Up to {maxPerSlot} patients per slot
+                </span>
+              )}
+            </label>
+            {renderSlots()}
           </div>
 
+          {/* Patient info */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div className="appt-field" style={{ gridColumn: "1/-1" }}>
               <label><User size={13} /> Full Name</label>
@@ -173,21 +278,25 @@ const BookingModal = ({ doctor, onClose, onSuccess }) => {
             </div>
           </div>
 
-          <div className="appt-field" style={{ gridColumn: "1/-1" }}>
+          <div className="appt-field">
             <label>Reason / Symptoms (optional)</label>
             <textarea placeholder="Briefly describe your symptoms or reason for visit…" rows={3}
               value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </div>
 
+          {/* Fee notice */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: "10px 14px" }}>
             <IndianRupee size={14} color="#0369a1" />
             <span style={{ fontSize: "0.82rem", color: "#0369a1", fontWeight: 600 }}>
-              Consultation fee: ₹{doctor.fee} — payable at the hospital.
+              Consultation fee: ₹{doctor.fee} — payable at the {appointmentType === "video-call" ? "time of call" : "hospital"}.
             </span>
           </div>
 
           <button type="submit" disabled={submitting} className="appt-submit-btn">
-            {submitting ? <><Loader2 size={17} className="spin" /> Booking…</> : <><CalendarCheck size={17} /> Confirm Appointment</>}
+            {submitting
+              ? <><Loader2 size={17} className="spin" /> Booking…</>
+              : <><CalendarCheck size={17} /> Confirm {appointmentType === "video-call" ? "Video" : ""} Appointment</>
+            }
           </button>
         </form>
       </div>

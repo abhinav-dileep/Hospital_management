@@ -4,16 +4,25 @@ import Doctor from "../model/doctorModel.js";
 
 export const bookAppointment = async (req, res) => {
   try {
-    const { patient, patientName, patientPhone, patientEmail, age, gender, doctor, date, slot, reason } = req.body;
-
+    const { patient, patientName, patientPhone, patientEmail, age, gender, doctor, date, slot, reason, appointmentType } = req.body;
 
     const doctorDoc = await Doctor.findById(doctor);
     if (!doctorDoc) return res.status(404).json({ success: false, message: "Doctor not found" });
 
+    // Enforce video-call restriction
+    if (appointmentType === "video-call" && !doctorDoc.allowsVideoCall) {
+      return res.status(400).json({ success: false, message: "This doctor does not offer video consultations." });
+    }
 
-    const conflict = await Appointment.findOne({ doctor, date, slot, status: { $ne: "Cancelled" } });
-    if (conflict) {
-      return res.status(409).json({ success: false, message: "This slot is already booked. Please choose another." });
+    // Determine max patients per slot for the given slot's day
+    const dayName = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
+    const dayAvailability = doctorDoc.availability?.find(a => a.day === dayName);
+    const maxPerSlot = dayAvailability?.maxPatientsPerSlot ?? 1;
+
+    // Count existing (non-cancelled) bookings for this doctor/date/slot
+    const existingCount = await Appointment.countDocuments({ doctor, date, slot, status: { $ne: "Cancelled" } });
+    if (existingCount >= maxPerSlot) {
+      return res.status(409).json({ success: false, message: `This slot is fully booked (${maxPerSlot} patient${maxPerSlot > 1 ? 's' : ''} max). Please choose another.` });
     }
 
     const appointment = new Appointment({
@@ -28,6 +37,7 @@ export const bookAppointment = async (req, res) => {
       date,
       slot,
       reason,
+      appointmentType: appointmentType || "in-person",
     });
 
     await appointment.save();
@@ -82,17 +92,6 @@ export const cancelAppointment = async (req, res) => {
 };
 
 
-export const updateAppointmentStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const appt = await Appointment.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    if (!appt) return res.status(404).json({ success: false, message: "Appointment not found" });
-    res.status(200).json({ success: true, message: "Status updated", appointment: appt });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
-};
-
 
 export const getBookedSlots = async (req, res) => {
   try {
@@ -107,8 +106,14 @@ export const getBookedSlots = async (req, res) => {
       status: { $ne: "Cancelled" },
     }).select("slot");
 
-    const bookedSlots = appointments.map((a) => a.slot);
-    res.status(200).json({ success: true, bookedSlots });
+    // Count bookings per slot
+    const slotCounts = {};
+    appointments.forEach(a => {
+      slotCounts[a.slot] = (slotCounts[a.slot] || 0) + 1;
+    });
+
+    const bookedSlots = appointments.map(a => a.slot);
+    res.status(200).json({ success: true, bookedSlots, slotCounts });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }

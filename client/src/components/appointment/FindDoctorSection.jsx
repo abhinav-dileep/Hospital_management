@@ -43,17 +43,6 @@ const FindDoctorSection = ({
       ))}
     </div>
 
-    {/* Results count */}
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-      <h3 style={{ fontWeight: 700, fontSize: "1rem", color: "#0f172a", margin: 0 }}>
-        {loading ? "Loading doctors…" : `${doctors.length} Doctor${doctors.length !== 1 ? "s" : ""} Found`}
-        {selSpec && <span style={{ color: "#0ea5e9", marginLeft: 8 }}>· {selSpec}</span>}
-      </h3>
-      {!loading && doctors.length > 0 && (
-        <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>Sorted by rating</span>
-      )}
-    </div>
-
     {/* Grid / empty / loading */}
     {loading ? (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 260, gap: 12, color: "#0ea5e9", fontSize: ".95rem" }}>

@@ -27,6 +27,12 @@ const appointmentSchema = new mongoose.Schema(
     slot:   { type: String, required: true },
     reason: { type: String, default: "" },
 
+    appointmentType: {
+      type: String,
+      enum: ["in-person", "video-call"],
+      default: "in-person",
+    },
+
 
     status: {
       type: String,

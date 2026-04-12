@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Stethoscope, CalendarDays, LogOut,
-  Menu, X, HeartPulse, ChevronRight, Bell,
+  HeartPulse, ChevronRight, Bell,
 } from 'lucide-react';
 
 const navItems = [
@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 const AdminLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const sidebarOpen = true;
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -77,20 +77,6 @@ const AdminLayout = () => {
         }
         .sidebar-brand span { color: #38bdf8; }
 
-        .sidebar-toggle {
-          margin-left: auto;
-          background: rgba(255,255,255,0.1);
-          border: none;
-          border-radius: 8px;
-          padding: 6px;
-          cursor: pointer;
-          color: #fff;
-          display: flex;
-          align-items: center;
-          transition: background 0.2s;
-          flex-shrink: 0;
-        }
-        .sidebar-toggle:hover { background: rgba(255,255,255,0.2); }
 
         .sidebar-nav {
           flex: 1;
@@ -272,9 +258,6 @@ const AdminLayout = () => {
               Medi<span>Care+</span><br />
               <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Admin Panel</span>
             </div>
-            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
-            </button>
           </div>
 
           <nav className="sidebar-nav">

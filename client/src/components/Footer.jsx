@@ -11,8 +11,6 @@ import {
   Instagram,
   Youtube,
   ArrowRight,
-  ShieldCheck,
-  Award,
 } from "lucide-react";
 
 const quickLinks = [
@@ -59,71 +57,7 @@ const Footer = () => {
         fontFamily: "'Poppins', sans-serif",
       }}
     >
-      {/* ── Top band ── */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #06b6d4 100%)",
-          padding: "2rem 0",
-        }}
-      >
-        <div className="container">
-          <div className="row align-items-center gy-3">
-            <div className="col-12 col-md-7">
-              <h4
-                style={{
-                  color: "#fff",
-                  fontWeight: 800,
-                  fontSize: "1.25rem",
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}
-              >
-                Need Immediate Medical Assistance?
-              </h4>
-              <p style={{ color: "rgba(255,255,255,0.85)", margin: 0, fontSize: "0.9rem" }}>
-                Our emergency helpline is available around the clock, 365 days a year.
-              </p>
-            </div>
-            <div className="col-12 col-md-5 d-flex flex-wrap gap-3 justify-content-md-end">
-              <a
-                href="tel:+911800MEDICARE"
-                className="btn d-flex align-items-center gap-2"
-                style={{
-                  background: "#fff",
-                  color: "#0369a1",
-                  borderRadius: "12px",
-                  padding: "10px 22px",
-                  fontWeight: 700,
-                  fontSize: "0.88rem",
-                  border: "none",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-                  textDecoration: "none",
-                }}
-              >
-                <Phone size={16} />
-                +91 1800-MEDICARE
-              </a>
-              <Link
-                to="/appointment"
-                className="btn d-flex align-items-center gap-2"
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  color: "#fff",
-                  border: "1.5px solid rgba(255,255,255,0.4)",
-                  borderRadius: "12px",
-                  padding: "10px 22px",
-                  fontWeight: 600,
-                  fontSize: "0.88rem",
-                  textDecoration: "none",
-                }}
-              >
-                Book Appointment
-                <ArrowRight size={15} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* ── Main footer body ── */}
       <div className="container" style={{ padding: "3.5rem 1.5rem 2.5rem" }}>
@@ -171,30 +105,6 @@ const Footer = () => {
               technology with compassionate care to deliver seamless and efficient
               healthcare services across India.
             </p>
-
-            {/* Trust badges */}
-            <div className="d-flex flex-wrap gap-2 mb-3">
-              {[
-                { Icon: ShieldCheck, label: "NABH Accredited" },
-                { Icon: Award, label: "ISO 9001:2015" },
-              ].map(({ Icon, label }) => (
-                <div
-                  key={label}
-                  className="d-flex align-items-center gap-2"
-                  style={{
-                    background: "rgba(14,165,233,0.1)",
-                    border: "1px solid rgba(14,165,233,0.2)",
-                    borderRadius: "8px",
-                    padding: "6px 12px",
-                  }}
-                >
-                  <Icon size={14} color="#0ea5e9" />
-                  <span style={{ fontSize: "0.75rem", color: "#7dd3fc", fontWeight: 600 }}>
-                    {label}
-                  </span>
-                </div>
-              ))}
-            </div>
 
             {/* Social icons */}
             <div className="d-flex gap-2 mt-3">
@@ -374,10 +284,10 @@ const Footer = () => {
               {[
                 {
                   Icon: MapPin,
-                  text: "12, MG Road, Connaught Place, New Delhi – 110001",
+                  text: "12, MG Road, Bangalore, Karnataka – 560001",
                 },
-                { Icon: Phone, text: "+91 1800-MEDICARE (24/7 Helpline)" },
-                { Icon: Mail, text: "care@medicare-plus.in" },
+                { Icon: Phone, text: "+91 9048814118 (24/7 Helpline)" },
+                { Icon: Mail, text: "medicareplus@gmail.com" },
                 { Icon: Clock, text: "OPD: Mon–Sat, 8:00 AM – 8:00 PM" },
               ].map(({ Icon, text }) => (
                 <div key={text} className="d-flex align-items-start gap-3">
@@ -417,13 +327,7 @@ const Footer = () => {
         {/* ── Bottom bar ── */}
         <div className="d-flex flex-column flex-md-row align-items-center justify-content-md-between gap-2">
           <p style={{ margin: 0, fontSize: "0.8rem", color: "#475569" }}>
-            © {year} MediCare+. All rights reserved. · Designed with{" "}
-            <HeartPulse
-              size={12}
-              color="#f43f5e"
-              style={{ display: "inline", verticalAlign: "middle" }}
-            />{" "}
-            for better healthcare.
+            © {year} MediCare+. All rights reserved
           </p>
           <div className="d-flex gap-3">
             {["Privacy Policy", "Terms of Use", "Cookie Policy"].map((item) => (

@@ -34,7 +34,7 @@ const ALL_SLOTS = [
 
 const emptyForm = {
   name: '', speciality: SPECIALITIES[0], qualification: '', experience: ''
-  , location: '', fee: '', bio: '', isActive: true,
+  , location: '', fee: '', bio: '', isActive: true, allowsVideoCall: false,
   availability: [],
 };
 
@@ -50,7 +50,7 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
       set('availability', form.availability.filter(a => a.day !== day));
     } else {
       const defaultSlots = ALL_SLOTS.slice(1, 10);
-      set('availability', [...form.availability, { day, slots: defaultSlots }]);
+      set('availability', [...form.availability, { day, slots: defaultSlots, maxPatientsPerSlot: 1 }]);
     }
   };
 
@@ -74,6 +74,12 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
 
       return { ...a, slots: ALL_SLOTS.slice(startIndex, endIndex + 1) };
     }));
+  };
+
+  const updateMaxPatients = (day, value) => {
+    set('availability', form.availability.map(a =>
+      a.day === day ? { ...a, maxPatientsPerSlot: Math.max(1, parseInt(value) || 1) } : a
+    ));
   };
 
   const isDayActive = (day) => form.availability.some(a => a.day === day);
@@ -141,6 +147,14 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
               {form.isActive ? 'Active' : 'Inactive'}
             </button>
           </div>
+          <div>
+            <label style={lbl}>Video Consultation</label>
+            <button type="button" onClick={() => set('allowsVideoCall', !form.allowsVideoCall)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: form.allowsVideoCall ? '#eff6ff' : '#f8fafc', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', color: form.allowsVideoCall ? '#1d4ed8' : '#64748b' }}>
+              {form.allowsVideoCall ? <ToggleRight size={20} color="#1d4ed8" /> : <ToggleLeft size={20} />}
+              {form.allowsVideoCall ? '🎥 Video Call ON' : 'Video Call OFF'}
+            </button>
+          </div>
         </div>
         <div>
           <label style={lbl}>Bio / About</label>
@@ -165,9 +179,9 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
                 ))}
               </div>
               {form.availability.map(({ day }) => (
-                <div key={day} style={{ marginBottom: 14 }}>
+                <div key={day} style={{ marginBottom: 14, background: '#f0f9ff', borderRadius: 10, padding: '10px 12px' }}>
                   <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e40af', marginBottom: 8 }}>{day}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     <select
                       className="df-input"
                       style={{ ...inp, width: 'auto', padding: '6px 10px' }}
@@ -185,6 +199,15 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
                     >
                       {ALL_SLOTS.map(slot => <option key={`end-${slot}`} value={slot}>{slot}</option>)}
                     </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: '0.75rem', color: '#374151', fontWeight: 600, whiteSpace: 'nowrap' }}>Max patients/slot:</span>
+                      <input
+                        type="number" min="1" max="50"
+                        style={{ ...inp, width: 64, padding: '6px 8px', textAlign: 'center' }}
+                        value={form.availability.find(a => a.day === day)?.maxPatientsPerSlot ?? 1}
+                        onChange={e => updateMaxPatients(day, e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -359,10 +382,17 @@ const AdminDoctors = () => {
                 </div>
 
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: doc.isActive ? '#dcfce7' : '#fee2e2', color: doc.isActive ? '#16a34a' : '#dc2626' }}>
-                    {doc.isActive ? '● Active' : '● Inactive'}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: doc.isActive ? '#dcfce7' : '#fee2e2', color: doc.isActive ? '#16a34a' : '#dc2626' }}>
+                      {doc.isActive ? '● Active' : '● Inactive'}
+                    </span>
+                    {doc.allowsVideoCall && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8' }}>
+                        🎥 Video Call
+                      </span>
+                    )}
+                  </div>
                   <button onClick={() => setExpandedId(expandedId === doc._id ? null : doc._id)}
                     style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: '#0ea5e9', fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer' }}>
                     <Clock size={13} /> Schedule {expandedId === doc._id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -374,9 +404,14 @@ const AdminDoctors = () => {
                     {doc.availability?.length === 0 ? (
                       <p style={{ color: '#94a3b8', fontSize: '0.78rem' }}>No schedule set</p>
                     ) : (
-                      doc.availability.map(({ day, slots }) => (
+                      doc.availability.map(({ day, slots, maxPatientsPerSlot }) => (
                         <div key={day} style={{ marginBottom: 8 }}>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#374151', marginBottom: 4 }}>{day}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#374151', marginBottom: 4 }}>
+                            <span>{day}</span>
+                            <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '1px 7px', borderRadius: 10 }}>
+                              {maxPatientsPerSlot ?? 1} patient{(maxPatientsPerSlot ?? 1) > 1 ? 's' : ''}/slot
+                            </span>
+                          </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {slots.map(s => (
                               <span key={s} style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.68rem', fontWeight: 600, padding: '2px 8px', borderRadius: 6 }}>{s}</span>

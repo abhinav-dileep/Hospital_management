@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  History, HeartPulse, ShieldPlus, Calendar,
+  History, HeartPulse, ShieldPlus,
   Loader2, RefreshCw, ChevronDown, ChevronUp,
   FileText, FlaskConical, Pill, Syringe, ClipboardList,
   Calendar as CalIcon, User, ExternalLink,

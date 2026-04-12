@@ -59,54 +59,7 @@ const facilities = [
     gradient: "linear-gradient(135deg, #6d28d9, #8b5cf6)",
     badge: null,
   },
-  {
-    id: "south",
-    name: "MediCare+ South Centre",
-    address: "21, Saket District Centre, New Delhi – 110017",
-    distance: "7.1 km",
-    timing: "6:00 AM – 11:00 PM",
-    phone: "+91 11-4012-3344",
-    rating: 4.8,
-    reviews: 2100,
-    type: "Women & Child Care",
-    open: true,
-    color: "#f43f5e",
-    glow: "rgba(244,63,94,0.2)",
-    gradient: "linear-gradient(135deg, #be123c, #f43f5e)",
-    badge: null,
-  },
-  {
-    id: "west",
-    name: "MediCare+ West Diagnostics",
-    address: "33, Janakpuri Block B, New Delhi – 110058",
-    distance: "9.4 km",
-    timing: "8:00 AM – 9:00 PM",
-    phone: "+91 11-4015-6677",
-    rating: 4.5,
-    reviews: 760,
-    type: "Radiology & Labs",
-    open: true,
-    color: "#f59e0b",
-    glow: "rgba(245,158,11,0.2)",
-    gradient: "linear-gradient(135deg, #b45309, #f59e0b)",
-    badge: null,
-  },
-  {
-    id: "airport",
-    name: "MediCare+ Airport Clinic",
-    address: "T3 Domestic Terminal, IGI Airport, New Delhi – 110037",
-    distance: "14.0 km",
-    timing: "Open 24/7",
-    phone: "+91 11-4020-9988",
-    rating: 4.7,
-    reviews: 540,
-    type: "Emergency & Travel",
-    open: true,
-    color: "#06b6d4",
-    glow: "rgba(6,182,212,0.2)",
-    gradient: "linear-gradient(135deg, #0891b2, #06b6d4)",
-    badge: null,
-  },
+
 ];
 
 const INITIAL_COUNT = 3;
@@ -349,9 +302,8 @@ const NearestFacility = () => {
                           fontWeight: 700,
                           borderRadius: "50px",
                           padding: "3px 10px",
-                          border: `1px solid ${
-                            facility.open ? "#10b98133" : "#ef444433"
-                          }`,
+                          border: `1px solid ${facility.open ? "#10b98133" : "#ef444433"
+                            }`,
                         }}
                       >
                         {facility.open ? "● Open" : "● Closed"}

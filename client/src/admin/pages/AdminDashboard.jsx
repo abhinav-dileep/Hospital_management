@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Stethoscope, CalendarDays, CalendarCheck,
-  TrendingUp, Activity,
+  Activity,
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -15,7 +15,6 @@ const adminHeaders = () => {
 const fetchAdminStats = () =>
   axios.get(`${API_BASE}/admin/stats`, { headers: adminHeaders() });
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const StatCard = ({ icon: Icon, label, value, color, bg, trend }) => (
   <div style={{
@@ -71,9 +70,6 @@ const AdminDashboard = () => {
   );
 
   if (!stats) return <p style={{ color: '#ef4444' }}>Failed to load stats.</p>;
-
-  // Build chart bars from monthly stats
-  const maxCount = Math.max(...(stats.monthlyStats?.map(m => m.count) || [1]), 1);
 
   return (
     <>
@@ -146,29 +142,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Monthly chart */}
-      <div style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Monthly Appointments (last 6 months)</h2>
-          <TrendingUp size={20} color="#0ea5e9" />
-        </div>
-        {stats.monthlyStats?.length === 0 ? (
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No monthly data yet.</p>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 130 }}>
-            {stats.monthlyStats?.map((m, i) => {
-              const h = Math.max(Math.round((m.count / maxCount) * 110), 10);
-              return (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>{m.count}</span>
-                  <div style={{ width: '100%', height: h, background: 'linear-gradient(180deg,#38bdf8,#0369a1)', borderRadius: '6px 6px 3px 3px', transition: 'height 0.6s ease' }} />
-                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{MONTHS[m._id.month - 1]}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
     </>
   );
 };

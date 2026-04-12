@@ -112,31 +112,6 @@ const Hero = () => {
             className="col-12 col-lg-6"
             style={{ animation: "floatUp 0.8s ease forwards" }}
           >
-            {/* Trust Badge */}
-            <div
-              className="d-inline-flex align-items-center gap-2 mb-4"
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.35)",
-                borderRadius: "50px",
-                padding: "8px 18px",
-              }}
-            >
-              <Star size={14} color="#fbbf24" fill="#fbbf24" />
-              <span
-                style={{
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  color: "#fff",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Trusted by 50,000+ Patients
-              </span>
-              <ShieldCheck size={14} color="#86efac" />
-            </div>
-
             {/* Main headline */}
             <h1
               style={{
@@ -275,7 +250,7 @@ const Hero = () => {
                     letterSpacing: "0.5px",
                   }}
                 >
-                  +91 1800-MEDICARE
+                  +91 9048814118
                 </p>
               </div>
             </div>
@@ -311,59 +286,7 @@ const Hero = () => {
                   display: "block",
                 }}
               />
-              {/* Overlay badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "16px",
-                  left: "16px",
-                  right: "16px",
-                  background: "rgba(255,255,255,0.95)",
-                  borderRadius: "16px",
-                  padding: "14px 18px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                }}
-              >
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    background:
-                      "linear-gradient(135deg, #10b981, #059669)",
-                    borderRadius: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <ShieldCheck size={22} color="#fff" />
-                </div>
-                <div>
-                  <p
-                    style={{
-                      fontWeight: 700,
-                      color: "#0f172a",
-                      fontSize: "0.9rem",
-                      margin: 0,
-                    }}
-                  >
-                    NABH Accredited Hospital
-                  </p>
-                  <p
-                    style={{
-                      color: "#64748b",
-                      fontSize: "0.78rem",
-                      margin: 0,
-                    }}
-                  >
-                    Internationally certified quality care
-                  </p>
-                </div>
-              </div>
+
             </div>
 
             {/* Stats row */}
@@ -435,7 +358,7 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
+    </section >
   );
 };
 
