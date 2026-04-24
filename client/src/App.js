@@ -10,6 +10,7 @@ import Appointment from './page/Appointment';
 import Emergency from './page/Emergency';
 import HealthRecord from './page/HealthRecord';
 import Profile from './page/Profile';
+import Payment from './page/Payment';
 
 // Admin
 import AdminLayout from './admin/AdminLayout';
@@ -59,6 +60,7 @@ function App() {
                                 <Route path="/emergency"     element={<Emergency />} />
                                 <Route path="/health-record" element={<HealthRecord />} />
                                 <Route path="/profile"       element={<Profile />} />
+                                <Route path="/payment"       element={<Payment />} />
                                 <Route path="/login"         element={<Login />} />
                                 <Route path="/register"      element={<Register />} />
                                 <Route path="*"              element={<Navigate to="/" replace />} />

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Stethoscope, CalendarDays, LogOut,
-  HeartPulse, ChevronRight, Bell,
+  HeartPulse, ChevronRight,
 } from 'lucide-react';
 
 const navItems = [
@@ -217,23 +217,7 @@ const AdminLayout = () => {
           border-radius: 20px;
           letter-spacing: 0.3px;
         }
-        .topbar-bell {
-          position: relative;
-          background: #f1f5f9;
-          border: none;
-          border-radius: 10px;
-          padding: 9px;
-          cursor: pointer;
-          transition: background 0.2s;
-          display: flex; align-items: center;
-        }
-        .topbar-bell:hover { background: #e2e8f0; }
-        .bell-dot {
-          position: absolute; top: 6px; right: 6px;
-          width: 8px; height: 8px;
-          background: #ef4444; border-radius: 50%;
-          border: 2px solid #fff;
-        }
+
 
         .admin-content {
           flex: 1;
@@ -291,10 +275,7 @@ const AdminLayout = () => {
           <header className="admin-topbar">
             <span className="topbar-title">Hospital Management System</span>
             <span className="topbar-pill">🛡️ Admin</span>
-            <button className="topbar-bell">
-              <Bell size={18} color="#64748b" />
-              <span className="bell-dot" />
-            </button>
+
           </header>
 
           <div className="admin-content">

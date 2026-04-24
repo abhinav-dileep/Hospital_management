@@ -56,8 +56,9 @@ const services = [
     glow: "rgba(245,158,11,0.25)",
     gradient: "linear-gradient(135deg, #b45309 0%, #f59e0b 100%)",
     tag: "Quick Results",
-    route: "/appointment?speciality=Radiology",
+    route: "/appointment?section=scans",
   },
+ 
 ];
 
 const BookService = () => {

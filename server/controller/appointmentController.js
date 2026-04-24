@@ -6,6 +6,19 @@ export const bookAppointment = async (req, res) => {
   try {
     const { patient, patientName, patientPhone, patientEmail, age, gender, doctor, date, slot, reason, appointmentType } = req.body;
 
+    /* ── Scan booking: no doctor required ── */
+    if (!doctor) {
+      const appointment = new Appointment({
+        patient, patientName, patientPhone, patientEmail, age, gender,
+        doctor: null,
+        speciality: "Diagnostic Scan",
+        date, slot, reason,
+        appointmentType: appointmentType || "in-person",
+      });
+      await appointment.save();
+      return res.status(201).json({ success: true, message: "Scan booked successfully!", appointment });
+    }
+
     const doctorDoc = await Doctor.findById(doctor);
     if (!doctorDoc) return res.status(404).json({ success: false, message: "Doctor not found" });
 
@@ -26,17 +39,10 @@ export const bookAppointment = async (req, res) => {
     }
 
     const appointment = new Appointment({
-      patient,
-      patientName,
-      patientPhone,
-      patientEmail,
-      age,
-      gender,
+      patient, patientName, patientPhone, patientEmail, age, gender,
       doctor,
       speciality: doctorDoc.speciality,
-      date,
-      slot,
-      reason,
+      date, slot, reason,
       appointmentType: appointmentType || "in-person",
     });
 

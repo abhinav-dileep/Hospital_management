@@ -18,7 +18,7 @@ const appointmentSchema = new mongoose.Schema(
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
-      required: true,
+      default: null,
     },
     speciality: { type: String, required: true },
 

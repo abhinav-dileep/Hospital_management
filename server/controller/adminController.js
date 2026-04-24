@@ -196,6 +196,18 @@ export const deleteHealthRecord = async (req, res) => {
   }
 };
 
+/* Admin: get all appointments for a specific patient */
+export const getPatientAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ patient: req.params.patientId })
+      .populate("doctor", "name speciality hospital location photo")
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, appointments });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 /* Patient-facing: get own health records */
 export const getMyHealthRecords = async (req, res) => {
   try {

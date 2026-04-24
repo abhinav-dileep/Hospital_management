@@ -10,6 +10,7 @@ import {
   getPatientHealthRecords,
   deleteHealthRecord,
   getMyHealthRecords,
+  getPatientAppointments,
 } from "../controller/adminController.js";
 import { requireAdmin } from "../middleware/adminMiddleware.js";
 import { uploadPDF } from "../middleware/uploadMiddleware.js";
@@ -35,5 +36,8 @@ router.patch("/appointments/:id/status",            adminUpdateAppointmentStatus
 router.get("/users/:patientId/health-records",               getPatientHealthRecords);
 router.post("/users/:patientId/health-records", uploadPDF,   addHealthRecord);
 router.delete("/health-records/:recordId",                   deleteHealthRecord);
+
+/* Patient Appointments – admin view */
+router.get("/users/:patientId/appointments",                 getPatientAppointments);
 
 export default router;

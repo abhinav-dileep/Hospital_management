@@ -12,7 +12,7 @@ const Home = () => {
       <BookService />
       <PromoBanner />
       <FindDoctor />
-      <NearestFacility />
+      {/* <NearestFacility /> */}
     </div>
   );
 };

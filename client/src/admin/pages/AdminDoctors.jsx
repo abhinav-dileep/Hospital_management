@@ -26,6 +26,24 @@ const SPECIALITIES = [
   "ENT", "Gynecology", "Ophthalmology", "Psychiatry", "General Physician",
   "Endocrinology", "Gastroenterology", "Urology", "Oncology", "Pulmonology",
 ];
+
+const SPECIALITY_QUALIFICATIONS = {
+  Cardiology:       ["MBBS, MD (Cardiology)", "MBBS, DM (Cardiology)", "MBBS, DNB (Cardiology)", "MBBS, MRCP (UK)"],
+  Neurology:        ["MBBS, MD (Neurology)", "MBBS, DM (Neurology)", "MBBS, DNB (Neurology)", "MBBS, MRCP (Neurology)"],
+  Orthopedics:      ["MBBS, MS (Orthopedics)", "MBBS, DNB (Orthopedics)", "MBBS, MCh (Orthopedics)", "MBBS, FRCS (Orthopedics)"],
+  Pediatrics:       ["MBBS, MD (Pediatrics)", "MBBS, DCH", "MBBS, DNB (Pediatrics)", "MBBS, MRCP (Pediatrics)"],
+  Dermatology:      ["MBBS, MD (Dermatology)", "MBBS, DVD", "MBBS, DNB (Dermatology)", "MBBS, FRCP (Dermatology)"],
+  ENT:              ["MBBS, MS (ENT)", "MBBS, DLO", "MBBS, DNB (ENT)", "MBBS, FRCS (ENT)"],
+  Gynecology:       ["MBBS, MS (Obstetrics & Gynecology)", "MBBS, MD (Obstetrics & Gynecology)", "MBBS, DGO", "MBBS, DNB (OBG)"],
+  Ophthalmology:    ["MBBS, MS (Ophthalmology)", "MBBS, DO", "MBBS, DNB (Ophthalmology)", "MBBS, FRCS (Ophthalmology)"],
+  Psychiatry:       ["MBBS, MD (Psychiatry)", "MBBS, DPM", "MBBS, DNB (Psychiatry)", "MBBS, MRCPsych"],
+  "General Physician": ["MBBS", "MBBS, MD (General Medicine)", "MBBS, DNB (General Medicine)", "MBBS, MRCP"],
+  Endocrinology:    ["MBBS, MD (Endocrinology)", "MBBS, DM (Endocrinology)", "MBBS, DNB (Endocrinology)"],
+  Gastroenterology: ["MBBS, MD (Gastroenterology)", "MBBS, DM (Gastroenterology)", "MBBS, DNB (Gastroenterology)", "MBBS, MRCP (Gastroenterology)"],
+  Urology:          ["MBBS, MS (Urology)", "MBBS, MCh (Urology)", "MBBS, DNB (Urology)", "MBBS, FRCS (Urology)"],
+  Oncology:         ["MBBS, MD (Oncology)", "MBBS, DM (Oncology)", "MBBS, DNB (Oncology)", "MBBS, MRCP (Oncology)"],
+  Pulmonology:      ["MBBS, MD (Pulmonology)", "MBBS, DM (Pulmonology)", "MBBS, DNB (Pulmonology)", "MBBS, DTCD"],
+};
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const ALL_SLOTS = [
   "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
@@ -33,8 +51,15 @@ const ALL_SLOTS = [
 ];
 
 const emptyForm = {
-  name: '', speciality: SPECIALITIES[0], qualification: '', experience: ''
-  , location: '', fee: '', bio: '', isActive: true, allowsVideoCall: false,
+  name: '',
+  speciality: SPECIALITIES[0],
+  qualification: SPECIALITY_QUALIFICATIONS[SPECIALITIES[0]]?.[0] || '',
+  experience: '',
+  location: '',
+  fee: '',
+  bio: '',
+  isActive: true,
+  allowsVideoCall: false,
   availability: [],
 };
 
@@ -49,6 +74,7 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
     if (exists) {
       set('availability', form.availability.filter(a => a.day !== day));
     } else {
+      
       const defaultSlots = ALL_SLOTS.slice(1, 10);
       set('availability', [...form.availability, { day, slots: defaultSlots, maxPatientsPerSlot: 1 }]);
     }
@@ -58,18 +84,21 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
     set('availability', form.availability.map(a => {
       if (a.day !== day) return a;
 
-      let currentStart = a.slots.length > 0 ? a.slots[0] : ALL_SLOTS[0];
-      let currentEnd = a.slots.length > 0 ? a.slots[a.slots.length - 1] : ALL_SLOTS[0];
+      const currentStart = a.slots.length > 0 ? a.slots[0] : ALL_SLOTS[0];
+      const currentEnd = a.slots.length > 0 ? a.slots[0] : ALL_SLOTS[0];
 
-      let newStart = type === 'start' ? value : currentStart;
-      let newEnd = type === 'end' ? value : currentEnd;
+      const newStart = type === 'start' ? value : currentStart;
+      const newEnd = type === 'end' ? value : currentEnd;
 
-      let startIndex = ALL_SLOTS.indexOf(newStart);
-      let endIndex = ALL_SLOTS.indexOf(newEnd);
+      const startIndex = ALL_SLOTS.indexOf(newStart);
+      const endIndex = ALL_SLOTS.indexOf(newEnd);
 
-      if (startIndex > endIndex) {
-        if (type === 'start') endIndex = startIndex;
-        else startIndex = endIndex;
+      
+      if (endIndex <= startIndex) {
+        toast.warning(
+          `End time must be after start time. "${newEnd}" is not after "${newStart}".`
+        );
+        return a; 
       }
 
       return { ...a, slots: ALL_SLOTS.slice(startIndex, endIndex + 1) };
@@ -119,17 +148,38 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
           </div>
           <div>
             <label style={lbl}>Speciality *</label>
-            <select className="df-input" style={inp} value={form.speciality} onChange={e => set('speciality', e.target.value)}>
+            <select
+              className="df-input"
+              style={inp}
+              value={form.speciality}
+              onChange={e => {
+                const newSpec = e.target.value;
+                set('speciality', newSpec);
+                // Reset qualification to first option of new speciality
+                set('qualification', SPECIALITY_QUALIFICATIONS[newSpec]?.[0] || '');
+              }}
+            >
               {SPECIALITIES.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div>
             <label style={lbl}>Qualification *</label>
-            <input className="df-input" style={inp} value={form.qualification} onChange={e => set('qualification', e.target.value)} placeholder="MBBS, MD" required />
+            <select
+              className="df-input"
+              style={inp}
+              value={form.qualification}
+              onChange={e => set('qualification', e.target.value)}
+              required
+            >
+              <option value="" disabled>-- Select Qualification --</option>
+              {(SPECIALITY_QUALIFICATIONS[form.speciality] || []).map(q => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label style={lbl}>Experience (years) *</label>
-            <input className="df-input" style={inp} type="number" min="0" value={form.experience} onChange={e => set('experience', e.target.value)} placeholder="10" required />
+            <input className="df-input" style={inp} type="number" min="0" max="20" value={form.experience} onChange={e => set('experience', e.target.value)} placeholder="10" required />
           </div>
           <div>
             <label style={lbl}>Location (City) *</label>
@@ -137,7 +187,7 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
           </div>
           <div>
             <label style={lbl}>Consultation Fee (₹) *</label>
-            <input className="df-input" style={inp} type="number" min="0" value={form.fee} onChange={e => set('fee', e.target.value)} placeholder="800" required />
+            <input className="df-input" style={inp} type="number" min="0" max="5000" value={form.fee} onChange={e => set('fee', e.target.value)} placeholder="800" required />
           </div>
           <div>
             <label style={lbl}>Status</label>
@@ -188,16 +238,26 @@ const DoctorForm = ({ initial, onSave, onCancel, saving }) => {
                       value={daySlots(day)[0] || ALL_SLOTS[0]}
                       onChange={e => updateTimeRange(day, 'start', e.target.value)}
                     >
-                      {ALL_SLOTS.map(slot => <option key={`start-${slot}`} value={slot}>{slot}</option>)}
+                      {/* Start time: exclude the last slot since end must be strictly after */}
+                      {ALL_SLOTS.slice(0, ALL_SLOTS.length - 1).map(slot => (
+                        <option key={`start-${slot}`} value={slot} min="1" max="50">
+                          {slot}
+                        </option>
+                      ))}
                     </select>
                     <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>to</span>
                     <select
                       className="df-input"
                       style={{ ...inp, width: 'auto', padding: '6px 10px' }}
-                      value={daySlots(day)[daySlots(day).length - 1] || ALL_SLOTS[0]}
+                      value={daySlots(day)[daySlots(day).length - 1] || ALL_SLOTS[1]}
                       onChange={e => updateTimeRange(day, 'end', e.target.value)}
                     >
-                      {ALL_SLOTS.map(slot => <option key={`end-${slot}`} value={slot}>{slot}</option>)}
+                      {/* End time: only show slots strictly after the current start */}
+                      {ALL_SLOTS.filter(slot =>
+                        ALL_SLOTS.indexOf(slot) > ALL_SLOTS.indexOf(daySlots(day)[0] || ALL_SLOTS[0])
+                      ).map(slot => (
+                        <option key={`end-${slot}`} value={slot}>{slot}</option>
+                      ))}
                     </select>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: '0.75rem', color: '#374151', fontWeight: 600, whiteSpace: 'nowrap' }}>Max patients/slot:</span>

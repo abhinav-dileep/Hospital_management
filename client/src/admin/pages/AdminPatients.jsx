@@ -5,6 +5,8 @@ import {
   Search, Loader2, Users, Trash2, Mail, Phone, Calendar,
   HeartPulse, ChevronDown, ChevronUp, Plus, X, FileText,
   FlaskConical, Pill, Syringe, ClipboardList, ExternalLink,
+  ScanLine, CalendarDays, Clock, CheckCircle2, XCircle, Clock3,
+  Stethoscope,
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -13,52 +15,196 @@ const adminHeaders = () => {
   return { 'x-user': JSON.stringify(user) };
 };
 
-const fetchAllPatients = () =>
-  axios.get(`${API_BASE}/admin/users`, { headers: adminHeaders() });
-
-const deletePatientById = (id) =>
-  axios.delete(`${API_BASE}/admin/users/${id}`, { headers: adminHeaders() });
-
-const fetchPatientRecords = (patientId) =>
-  axios.get(`${API_BASE}/admin/users/${patientId}/health-records`, { headers: adminHeaders() });
-
-const addRecord = (patientId, formData) =>
-  axios.post(`${API_BASE}/admin/users/${patientId}/health-records`, formData, {
-    headers: adminHeaders(), // ⚠️ Do NOT set Content-Type manually — axios/browser adds multipart boundary automatically
-  });
-
-const deleteRecord = (recordId) =>
-  axios.delete(`${API_BASE}/admin/health-records/${recordId}`, { headers: adminHeaders() });
+const fetchAllPatients        = () => axios.get(`${API_BASE}/admin/users`, { headers: adminHeaders() });
+const deletePatientById       = (id) => axios.delete(`${API_BASE}/admin/users/${id}`, { headers: adminHeaders() });
+const fetchPatientRecords     = (pid) => axios.get(`${API_BASE}/admin/users/${pid}/health-records`, { headers: adminHeaders() });
+const fetchPatientAppointments = (pid) => axios.get(`${API_BASE}/admin/users/${pid}/appointments`, { headers: adminHeaders() });
+const addRecord               = (pid, fd) => axios.post(`${API_BASE}/admin/users/${pid}/health-records`, fd, { headers: adminHeaders() });
+const deleteRecord            = (rid) => axios.delete(`${API_BASE}/admin/health-records/${rid}`, { headers: adminHeaders() });
 
 /* ── Constants ── */
-const RECORD_TYPES = [
-  "Scan Report", "Prescription", "Lab Result",
-  "Discharge Summary", "Vaccination", "Other",
-];
-
+const RECORD_TYPES = ["Scan Report", "Prescription", "Lab Result", "Discharge Summary", "Vaccination", "Other"];
 const TYPE_CONFIG = {
-  "Scan Report":        { icon: <FileText    size={14} />, color: "#6366f1", bg: "#eef2ff" },
-  "Prescription":       { icon: <Pill         size={14} />, color: "#10b981", bg: "#d1fae5" },
-  "Lab Result":         { icon: <FlaskConical  size={14} />, color: "#f59e0b", bg: "#fef3c7" },
-  "Discharge Summary":  { icon: <ClipboardList size={14} />, color: "#0ea5e9", bg: "#e0f2fe" },
-  "Vaccination":        { icon: <Syringe       size={14} />, color: "#ec4899", bg: "#fce7f3" },
-  "Other":              { icon: <HeartPulse    size={14} />, color: "#64748b", bg: "#f1f5f9" },
+  "Scan Report":       { icon: <FileText    size={14} />, color: "#6366f1", bg: "#eef2ff" },
+  "Prescription":      { icon: <Pill        size={14} />, color: "#10b981", bg: "#d1fae5" },
+  "Lab Result":        { icon: <FlaskConical size={14} />, color: "#f59e0b", bg: "#fef3c7" },
+  "Discharge Summary": { icon: <ClipboardList size={14} />, color: "#0ea5e9", bg: "#e0f2fe" },
+  "Vaccination":       { icon: <Syringe     size={14} />, color: "#ec4899", bg: "#fce7f3" },
+  "Other":             { icon: <HeartPulse  size={14} />, color: "#64748b", bg: "#f1f5f9" },
+};
+const EMPTY_FORM = { type: RECORD_TYPES[0], title: '', date: '', doctor: '', description: '', notes: '', pdfFile: null };
+
+const STATUS_CONFIG = {
+  Pending:   { color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', icon: <Clock3 size={12} /> },
+  Confirmed: { color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd', icon: <CheckCircle2 size={12} /> },
+  Completed: { color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0', icon: <CheckCircle2 size={12} /> },
+  Cancelled: { color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: <XCircle size={12} /> },
 };
 
-const EMPTY_FORM = {
-  type: RECORD_TYPES[0], title: '', date: '', doctor: '', description: '', notes: '',
-  pdfFile: null,
+const fmtDate = (d) => {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return new Date(+y, +m - 1, +day).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+/* ════════════════════════════════════
+   SCAN / APPOINTMENT BOOKINGS PANEL
+════════════════════════════════════ */
+const AppointmentsPanel = ({ patient }) => {
+  const [appts, setAppts]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab]       = useState('scan'); // 'scan' | 'doctor'
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchPatientAppointments(patient._id);
+      setAppts(res.data.appointments || []);
+    } catch { setAppts([]); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, [patient._id]);
+
+  const scanAppts   = appts.filter(a => a.speciality === 'Diagnostic Scan' || !a.doctor);
+  const doctorAppts = appts.filter(a => a.speciality !== 'Diagnostic Scan' && a.doctor);
+
+  const displayed = tab === 'scan' ? scanAppts : doctorAppts;
+
+  const inp = {
+    border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '8px 12px',
+    fontSize: '0.82rem', width: '100%', outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
+  };
+
+  return (
+    <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 14, paddingTop: 14 }}>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <button
+          onClick={() => setTab('scan')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 13px', border: 'none', borderRadius: 8, cursor: 'pointer',
+            fontSize: '0.75rem', fontWeight: 700,
+            background: tab === 'scan' ? '#7c3aed' : '#f1f5f9',
+            color: tab === 'scan' ? '#fff' : '#64748b',
+          }}
+        >
+          <ScanLine size={13} /> Scan Bookings
+          <span style={{
+            background: tab === 'scan' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
+            color: tab === 'scan' ? '#fff' : '#475569',
+            borderRadius: 20, fontSize: '0.65rem', fontWeight: 800,
+            padding: '0px 6px',
+          }}>
+            {scanAppts.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setTab('doctor')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 13px', border: 'none', borderRadius: 8, cursor: 'pointer',
+            fontSize: '0.75rem', fontWeight: 700,
+            background: tab === 'doctor' ? '#0ea5e9' : '#f1f5f9',
+            color: tab === 'doctor' ? '#fff' : '#64748b',
+          }}
+        >
+          <Stethoscope size={13} /> Doctor Appointments
+          <span style={{
+            background: tab === 'doctor' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
+            color: tab === 'doctor' ? '#fff' : '#475569',
+            borderRadius: 20, fontSize: '0.65rem', fontWeight: 800,
+            padding: '0px 6px',
+          }}>
+            {doctorAppts.length}
+          </span>
+        </button>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#0ea5e9', fontSize: '0.8rem', padding: '8px 0' }}>
+          <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading…
+        </div>
+      ) : displayed.length === 0 ? (
+        <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: 0, fontStyle: 'italic' }}>
+          No {tab === 'scan' ? 'scan' : 'doctor'} bookings found.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {displayed.map(a => {
+            const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG.Pending;
+            const isScan = !a.doctor || a.speciality === 'Diagnostic Scan';
+            return (
+              <div key={a._id} style={{
+                background: '#fff', borderRadius: 10, border: '1.5px solid #f1f5f9',
+                padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start',
+              }}>
+                {/* Icon */}
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  background: isScan ? 'rgba(124,58,237,0.10)' : '#e0f2fe',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.1rem',
+                }}>
+                  {isScan ? '🧲' : '🩺'}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Status badge */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 4,
+                    background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 20,
+                    padding: '1px 8px', fontSize: '0.68rem', fontWeight: 700, color: cfg.color }}>
+                    {cfg.icon} {a.status}
+                  </div>
+                  <p style={{ fontWeight: 700, fontSize: '0.82rem', color: '#0f172a', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {isScan ? (a.reason?.split('—')[0]?.trim() || 'Diagnostic Scan') : (a.doctor?.name || 'Doctor')}
+                  </p>
+                  <p style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, margin: '0 0 3px' }}>
+                    {a.speciality}
+                  </p>
+                  {!isScan && a.doctor?.hospital && (
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0 0 3px' }}>
+                      🏥 {a.doctor.hospital}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#475569', background: '#f1f5f9', borderRadius: 6, padding: '2px 8px' }}>
+                      <CalendarDays size={11} /> {fmtDate(a.date)}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#475569', background: '#f1f5f9', borderRadius: 6, padding: '2px 8px' }}>
+                      <Clock size={11} /> {a.slot}
+                    </span>
+                    {a.appointmentType === 'video-call' && (
+                      <span style={{ fontSize: '0.68rem', background: '#ede9fe', color: '#7c3aed', borderRadius: 6, padding: '2px 8px', fontWeight: 700 }}>📹 Video</span>
+                    )}
+                  </div>
+                  {isScan && a.reason && (
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '4px 0 0', fontStyle: 'italic' }}>
+                      📋 {a.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };
 
 /* ════════════════════════════════════
    HEALTH RECORDS PANEL (per patient)
 ════════════════════════════════════ */
 const HealthPanel = ({ patient }) => {
-  const [records, setRecords]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [showForm, setShowForm]   = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [form, setForm]           = useState(EMPTY_FORM);
+  const [records, setRecords]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving]     = useState(false);
+  const [form, setForm]         = useState(EMPTY_FORM);
 
   const load = async () => {
     setLoading(true);
@@ -76,38 +222,26 @@ const HealthPanel = ({ patient }) => {
     if (!form.title || !form.date) { toast.error('Title and date are required'); return; }
     setSaving(true);
     try {
-      /* Build FormData so the PDF file is included */
       const fd = new FormData();
-      fd.append('type',        form.type);
-      fd.append('title',       form.title);
-      fd.append('date',        form.date);
-      fd.append('doctor',      form.doctor);
-      fd.append('description', form.description);
-      fd.append('notes',       form.notes);
+      fd.append('type', form.type); fd.append('title', form.title); fd.append('date', form.date);
+      fd.append('doctor', form.doctor); fd.append('description', form.description); fd.append('notes', form.notes);
       if (form.pdfFile) fd.append('pdf', form.pdfFile);
-
       await addRecord(patient._id, fd);
       toast.success('Health record added');
-      setForm(EMPTY_FORM);
-      setShowForm(false);
-      load();
+      setForm(EMPTY_FORM); setShowForm(false); load();
     } catch { toast.error('Failed to add record'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this health record?')) return;
-    try {
-      await deleteRecord(id);
-      toast.success('Record deleted');
-      load();
-    } catch { toast.error('Delete failed'); }
+    try { await deleteRecord(id); toast.success('Record deleted'); load(); }
+    catch { toast.error('Delete failed'); }
   };
 
   const inp = {
     border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '8px 12px',
-    fontSize: '0.82rem', width: '100%', outline: 'none',
-    background: '#f8fafc', fontFamily: 'inherit',
+    fontSize: '0.82rem', width: '100%', outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
   };
 
   return (
@@ -159,7 +293,6 @@ const HealthPanel = ({ patient }) => {
               <label style={{ fontSize: '0.72rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Notes</label>
               <textarea style={{ ...inp, resize: 'vertical', minHeight: 56 }} placeholder="Additional notes for the patient" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
             </div>
-            {/* PDF Upload */}
             <div style={{ gridColumn: '1/-1' }}>
               <label style={{ fontSize: '0.72rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
                 📎 Attach PDF Report (optional, max 10 MB)
@@ -213,7 +346,6 @@ const HealthPanel = ({ patient }) => {
                   <p style={{ fontWeight: 700, fontSize: '0.82rem', color: '#0f172a', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</p>
                   {r.doctor && <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>👨‍⚕️ {r.doctor}</p>}
                   {r.description && <p style={{ fontSize: '0.72rem', color: '#374151', margin: '3px 0 0' }}>{r.description}</p>}
-                  {/* PDF link */}
                   {r.fileUrl && (
                     <a href={`http://localhost:4000/${r.fileUrl}`} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, fontSize: '0.7rem', fontWeight: 700, color: '#0ea5e9', textDecoration: 'none', background: '#e0f2fe', borderRadius: 6, padding: '3px 8px' }}>
@@ -235,13 +367,49 @@ const HealthPanel = ({ patient }) => {
 };
 
 /* ════════════════════════════════════
+   EXPANDED PATIENT PANEL — tabs
+════════════════════════════════════ */
+const PatientPanel = ({ patient }) => {
+  const [activeTab, setActiveTab] = useState('health'); // 'health' | 'bookings'
+
+  const tabBtn = (id, label, icon, activeColor) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px',
+        border: 'none', borderRadius: 8, cursor: 'pointer',
+        fontFamily: 'inherit', fontSize: '0.8rem', fontWeight: 700,
+        background: activeTab === id ? activeColor : '#f1f5f9',
+        color: activeTab === id ? '#fff' : '#64748b',
+        transition: 'all 0.18s',
+      }}
+    >
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 14, paddingTop: 14 }}>
+      {/* Tab selector */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+        {tabBtn('health',   'Health Records',    <HeartPulse size={13} />, '#ef4444')}
+        {tabBtn('bookings', 'Booking History',   <ScanLine   size={13} />, '#7c3aed')}
+      </div>
+
+      {activeTab === 'health'   && <HealthPanel        patient={patient} />}
+      {activeTab === 'bookings' && <AppointmentsPanel  patient={patient} />}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════
    MAIN ADMIN PATIENTS PAGE
 ════════════════════════════════════ */
 const AdminPatients = () => {
-  const [patients, setPatients]       = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState('');
-  const [expandedId, setExpandedId]   = useState(null);
+  const [patients, setPatients]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -255,11 +423,8 @@ const AdminPatients = () => {
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete patient ${name}? This cannot be undone.`)) return;
-    try {
-      await deletePatientById(id);
-      toast.success('Patient removed');
-      load();
-    } catch { toast.error('Delete failed'); }
+    try { await deletePatientById(id); toast.success('Patient removed'); load(); }
+    catch { toast.error('Delete failed'); }
   };
 
   const filtered = patients.filter(p =>
@@ -326,7 +491,7 @@ const AdminPatients = () => {
                   >
                     <HeartPulse size={13} />
                     {expandedId === p._id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    Health
+                    Details
                   </button>
                   <button onClick={() => handleDelete(p._id, p.name)} title="Delete"
                     style={{ padding: 7, border: 'none', borderRadius: 8, background: '#fef2f2', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
@@ -335,8 +500,8 @@ const AdminPatients = () => {
                 </div>
               </div>
 
-              {/* Expandable Health Records Panel */}
-              {expandedId === p._id && <HealthPanel patient={p} />}
+              {/* Expandable Panel with Tabs */}
+              {expandedId === p._id && <PatientPanel patient={p} />}
             </div>
           ))}
         </div>
